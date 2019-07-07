@@ -6,6 +6,8 @@ lib/
 pip-wheel-metadata/
 
 .idea/
+.vscode/
+
 .ipynb_checkpoints
 profile_default/
 env/
