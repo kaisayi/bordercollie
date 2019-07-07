@@ -1,0 +1,12 @@
+__pycache__/
+/test/
+dist/
+.eggs/
+lib/
+pip-wheel-metadata/
+
+.idea/
+.ipynb_checkpoints
+profile_default/
+env/
+.env
