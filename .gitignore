@@ -3,6 +3,7 @@ __pycache__/
 dist/
 .eggs/
 lib/
+summary/
 pip-wheel-metadata/
 
 .idea/
