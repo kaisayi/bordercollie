@@ -50,4 +50,14 @@ captcha.image.ImageCaptcha.generate('1234') # 生成验证码图像
 
 图像处理: RGB => 灰度图 => 规范化数据
 
+## `Tensorflow 2.0`起步
+
+### 环境配置
+
+- `NAVIDIA GTX965`
+- `CUDA==10.0`
+- `cudnn==7.6`
+- `tensorflow==2.0.0-beta1`
+
+
  
