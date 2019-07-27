@@ -75,3 +75,9 @@ network = keras.models.load_model(model_store_path)
 print('loaded model')
 network.evaluate(ds_val)
 
+# 更通用的保存方式，可以给其他的语言使用
+tf.saved_model.save(network, '/tmp/saved_model/')
+
+imported = tf.saved_model.load('/tmp/saved_model/')
+f = imported.signatures['serving_default']
+print(f(x=tf.ones([1, 28, 28, 3])))
