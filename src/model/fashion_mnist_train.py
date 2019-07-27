@@ -47,6 +47,10 @@ model.build(input_shape=[None, 28 * 28])
 model.summary()
 optimizer = keras.optimizers.Adam(lr=1e-2)
 
+# create meter
+acc_meter = keras.metrics.Accuracy()
+loss_meter = keras.metrics.Mean()
+
 current_time = datetime.now().strftime("%Y%m%d-%H%M")
 log_dir = os.path.normpath(os.path.join(PROJ_PATH, "out/logs")) + '\\' + current_time
 summary_writer = tf.summary.create_file_writer(log_dir)
@@ -66,13 +70,15 @@ def main():
             logits = model(_x)
             loss_mse = tf.reduce_mean(tf.losses.MSE(y_onehot, logits))
             loss_ce = tf.reduce_mean(tf.losses.categorical_crossentropy(y_onehot, logits, from_logits=True))
+            loss_meter.update_state(loss_ce)
 
         grads = tape.gradient(loss_ce, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
         if step % 100 == 0:
             print("Step: {}, loss_mse : {}, loss_ce : {}"
-                  .format(step, float(loss_mse), float(loss_ce)))
+                  .format(step, float(loss_mse), loss_meter.result().numpy()))
+            loss_meter.reset_states()
 
             with summary_writer.as_default():
                 tf.summary.scalar('train loss', float(loss_ce), step=step)
@@ -81,6 +87,7 @@ def main():
         if step % 500 == 0:
             total_num = 0
             total_correct = 0
+            acc_meter.reset_states()
             for _xt, _yt in db_test:
                 _xt = tf.reshape(_xt, [-1, 28 * 28])
                 logits = model(_xt)
@@ -92,9 +99,12 @@ def main():
                 correct = tf.reduce_sum(tf.cast(correct, dtype=tf.int32))
                 total_correct += int(correct)
                 total_num += _xt.shape[0]
+
+                acc_meter.update_state(_yt, pred)
+
             acc = total_correct / total_num
             print("Test Acc : {}"
-                  .format(acc))
+                  .format(acc_meter.result().numpy()))
 
             val_images = x[:25]
             val_images = tf.reshape(val_images, [-1, 28, 28, 1])
