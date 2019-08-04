@@ -54,6 +54,25 @@ def save_result(val_out, val_block_size, image_path, color_mode):
     Image.fromarray(final_image, color_mode).save(image_path)
 
 
+def gradient_penalty(discriminator, batch_x, fake_image):
+    batchsz = batch_x.shape[0]
+    t = tf.random.uniform([batchsz, 1, 1, 1])
+    t = tf.broadcast_to(t, batch_x.shape)
+    interplote = t * batch_x + (1 - t) * fake_image
+
+    with tf.GradientTape() as tape:
+        tape.watch([interplote])
+        d_interplote_logits = discriminator(interplote)
+
+    grads = tape.gradient(d_interplote_logits, interplote)
+
+    # grads: [b, h, w, c] => [b, -1]
+    grads = tf.reshape(grads, [grads.shape[0], -1])
+    gp = tf.norm(grads, axis=1)
+    gp = tf.reduce_mean((gp - 1) ** 2)
+    return gp
+
+
 def celoss_ones(logits):
     loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf.ones_like(logits))
 
@@ -75,8 +94,9 @@ def d_loss_fn(generator, discriminator, batch_z, batch_x, is_training):
 
     d_loss_real = celoss_ones(d_real_logits)
     d_loss_fake = celoss_zeros(d_fake_logits)
+    gp = gradient_penalty(discriminator, batch_x, fake_image)
 
-    loss = d_loss_fake + d_loss_real
+    loss = d_loss_fake + d_loss_real + 1. * gp
     return loss
 
 
@@ -134,7 +154,7 @@ def main():
 
             z = tf.random.uniform([100, z_dim])
             fake_image = generator(z, training=False)
-            save_image_path = os.path.normpath(os.path.join(PROJ_PATH, "data/fake-faces/gan-%d.png"%epoch))
+            save_image_path = os.path.normpath(os.path.join(PROJ_PATH, "data/fake-faces/gan-%d.png" % epoch))
             save_result(fake_image.numpy(), 10, save_image_path, color_mode='RGB')
 
 
