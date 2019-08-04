@@ -69,8 +69,8 @@ class VAE(keras.Model):
         self.fc5 = keras.layers.Dense(784)
 
     def reparameterize(self, mu, log_var):
-        eps = tf.random.normal(log_var.shape)
         std = tf.exp(log_var) ** 0.5
+        eps = tf.random.normal(log_var.shape)
         z = mu + std * eps
         return z
 
